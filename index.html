@@ -1,20 +1,142 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Jewel Blast World</title>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jewel Blast World</title>
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:18px 12px;background:linear-gradient(145deg,#17134b,#40206c,#101b48);color:white;font-family:system-ui,Arial;text-align:center}h1{color:#ffe477;font-size:clamp(26px,7vw,38px)}.stats{display:flex;gap:9px;max-width:430px;margin:18px auto}.stat{flex:1;padding:10px;border-radius:14px;background:#ffffff18}.stat small{display:block;color:#ddd}.stat b{font-size:22px}#board{width:min(94vw,440px);margin:15px auto;padding:8px;display:grid;grid-template-columns:repeat(8,1fr);gap:5px;background:#0b103b;border:3px solid #8c7cff;border-radius:18px}.cell{aspect-ratio:1;border:0;border-radius:10px;background:#ffffff20;font-size:clamp(19px,6vw,33px);padding:0}.selected{outline:3px solid #fff36a;transform:scale(.9)}.action{border:0;border-radius:12px;padding:12px 22px;font-weight:bold;background:#ffcf4b;color:#28144e}#msg{min-height:28px;color:#fff0a5}
-</style></head><body>
-<h1>💎 JEWEL BLAST WORLD</h1><p>Swap jewels • Match 3 or more • Reach the target!</p>
-<div class="stats"><div class="stat"><small>SCORE</small><b id="score">0</b></div><div class="stat"><small>MOVES</small><b id="moves">25</b></div><div class="stat"><small>TARGET</small><b>1000</b></div></div>
-<div id="board"></div><p id="msg">Tap two neighboring jewels to swap them.</p><button class="action" id="restart">↻ Restart</button>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;padding:20px 12px;
+ font-family:Arial,sans-serif;color:white;text-align:center;
+ background:linear-gradient(145deg,#171044,#39206e,#101b48);
+}
+h1{font-size:30px;margin:12px 0;color:#ffe58a}
+.sub{color:#d8d1ff;margin-bottom:20px}
+.stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.stat{background:#ffffff18;border:1px solid #ffffff35;
+ border-radius:14px;padding:12px 18px;min-width:95px}
+.stat small{display:block;color:#d9d3ff;font-size:12px}
+.stat b{font-size:23px}
+#board{
+ width:min(94vw,440px);margin:20px auto;padding:7px;
+ display:grid;grid-template-columns:repeat(8,1fr);gap:5px;
+ background:#080d2d;border:3px solid #ffffff30;
+ border-radius:18px;box-shadow:0 10px 35px #0008;
+}
+.gem{
+ aspect-ratio:1;border:0;border-radius:10px;
+ font-size:clamp(19px,6vw,31px);
+ background:linear-gradient(145deg,#ffffff35,#ffffff0b);
+ cursor:pointer;touch-action:manipulation;
+}
+.gem.selected{outline:3px solid #fff36b;transform:scale(.91)}
+button.action{
+ border:0;border-radius:25px;padding:13px 25px;
+ background:linear-gradient(90deg,#ffcf55,#ff8c42);
+ color:#31164d;font-weight:bold;font-size:16px;
+}
+#message{min-height:28px;color:#ffe58a;margin:12px}
+</style>
+</head>
+<body>
+<h1>💎 JEWEL BLAST WORLD</h1>
+<p class="sub">Swap jewels • Match 3 or more!</p>
+
+<div class="stats">
+ <div class="stat"><small>SCORE</small><b id="score">0</b></div>
+ <div class="stat"><small>MOVES</small><b id="moves">25</b></div>
+ <div class="stat"><small>TARGET</small><b>500</b></div>
+</div>
+
+<div id="board"></div>
+<p id="message">Tap two neighboring jewels to swap!</p>
+<button class="action" onclick="restart()">↻ Restart Game</button>
+
 <script>
-const gems=["💎","❤️","🟡","💚","🔵","💜"],N=8;let grid=[],score=0,moves=25,chosen=null,locked=false;
-const board=document.querySelector("#board"),scoreEl=document.querySelector("#score"),movesEl=document.querySelector("#moves"),msg=document.querySelector("#msg"),rand=()=>Math.floor(Math.random()*gems.length);
-function matches(){let s=new Set();for(let r=0;r<N;r++)for(let c=0;c<N;c++){let k=c+1;while(k<N&&grid[r][k]===grid[r][c])k++;if(k-c>=3)for(let x=c;x<k;x++)s.add(r*N+x);k=r+1;while(k<N&&grid[k][c]===grid[r][c])k++;if(k-r>=3)for(let x=r;x<k;x++)s.add(x*N+c)}return [...s]}
-function fresh(){do{grid=Array.from({length:N},()=>Array.from({length:N},rand))}while(matches().length)}
-function draw(){board.innerHTML="";for(let r=0;r<N;r++)for(let c=0;c<N;c++){let b=document.createElement("button");b.className="cell"+(chosen&&chosen.r===r&&chosen.c===c?" selected":"");b.textContent=gems[grid[r][c]];b.onclick=()=>tap(r,c);board.append(b)}scoreEl.textContent=score;movesEl.textContent=moves}
-function swap(a,b){let t=grid[a.r][a.c];grid[a.r][a.c]=grid[b.r][b.c];grid[b.r][b.c]=t}
-function tap(r,c){if(locked||moves<=0)return;let p={r,c};if(!chosen){chosen=p;draw();return}if(chosen.r===r&&chosen.c===c){chosen=null;draw();return}if(Math.abs(chosen.r-r)+Math.abs(chosen.c-c)!==1){chosen=p;draw();return}let old=chosen;chosen=null;swap(old,p);if(!matches().length){swap(old,p);msg.textContent="That swap doesn't make a match. Try again!";draw();return}moves--;resolve()}
-function resolve(){locked=true;let m=matches();while(m.length){score+=m.length*10;for(let id of m)grid[Math.floor(id/N)][id%N]=-1;for(let c=0;c<N;c++){let vals=[];for(let r=N-1;r>=0;r--)if(grid[r][c]!==-1)vals.push(grid[r][c]);while(vals.length<N)vals.push(rand());for(let r=N-1,i=0;r>=0;r--,i++)grid[r][c]=vals[i]}m=matches()}locked=false;draw();if(score>=1000){msg.textContent="🏆 Level complete!";moves=0;movesEl.textContent=moves}else if(moves===0)msg.textContent="Game over! Press Restart.";else msg.textContent="Great match! ✨"}
-function restart(){score=0;moves=25;chosen=null;locked=false;msg.textContent="Tap two neighboring jewels to swap them.";fresh();draw()}
-document.querySelector("#restart").onclick=restart;restart();
-</script></body></html>
+const gems=["💎","❤️","🟡","💚","🔵","💜"];
+const N=8;
+let grid=[],score=0,moves=25,selected=null,locked=false;
+const board=document.getElementById("board");
+
+function matches(){
+ let found=new Set();
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+  let v=grid[r][c];
+  if(!v)continue;
+  if(c<6&&v===grid[r][c+1]&&v===grid[r][c+2]){
+   let k=c;while(k<N&&grid[r][k]===v)found.add(r*N+k++);
+  }
+  if(r<6&&v===grid[r+1][c]&&v===grid[r+2][c]){
+   let k=r;while(k<N&&grid[k][c]===v)found.add(k++*N+c);
+  }
+ }
+ return [...found];
+}
+function fresh(){
+ do{
+  grid=Array.from({length:N},()=>Array.from({length:N},
+   ()=>gems[Math.floor(Math.random()*gems.length)]));
+ }while(matches().length);
+ draw();
+}
+function draw(){
+ board.innerHTML="";
+ grid.forEach((row,r)=>row.forEach((v,c)=>{
+  let b=document.createElement("button");
+  b.className="gem";
+  b.textContent=v||"";
+  if(selected&&selected.r===r&&selected.c===c)b.classList.add("selected");
+  b.onclick=()=>tap(r,c);
+  board.appendChild(b);
+ }));
+ document.getElementById("score").textContent=score;
+ document.getElementById("moves").textContent=moves;
+}
+function swap(a,b){
+ [grid[a.r][a.c],grid[b.r][b.c]]=[grid[b.r][b.c],grid[a.r][a.c]];
+}
+function tap(r,c){
+ if(locked||moves<=0)return;
+ let p={r,c};
+ if(!selected){selected=p;draw();return;}
+ let a=selected;selected=null;
+ if(Math.abs(a.r-r)+Math.abs(a.c-c)!==1){selected=p;draw();return;}
+ swap(a,p);
+ if(matches().length){
+  moves--;resolve();
+ }else{
+  swap(a,p);draw();
+  document.getElementById("message").textContent="Try another match!";
+ }
+}
+function resolve(){
+ locked=true;
+ let m=matches();
+ while(m.length){
+  score+=m.length*10;
+  m.forEach(i=>grid[Math.floor(i/N)][i%N]=null);
+  for(let c=0;c<N;c++){
+   let vals=[];
+   for(let r=N-1;r>=0;r--)if(grid[r][c])vals.push(grid[r][c]);
+   for(let r=N-1;r>=0;r--)
+    grid[r][c]=vals[N-1-r]||gems[Math.floor(Math.random()*gems.length)];
+  }
+  m=matches();
+ }
+ locked=false;draw();
+ let msg=document.getElementById("message");
+ if(score>=500)msg.textContent="🏆 Amazing! You reached the target!";
+ else if(moves<=0)msg.textContent="Game over! Tap Restart to play again.";
+ else msg.textContent="✨ Great match! Keep going!";
+}
+function restart(){
+ score=0;moves=25;selected=null;locked=false;
+ document.getElementById("message").textContent="New game! Good luck!";
+ fresh();
+}
+fresh();
+</script>
+</body>
+</html>
